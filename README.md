@@ -123,7 +123,7 @@ Open the project folder and simply launch `index.html` in your browser or use VS
 
 ## 👩‍💻 Author
 
-**Priya Singh**
+**Priya Rani**
 
 **GitHub:** https://github.com/priyaaa405
 
