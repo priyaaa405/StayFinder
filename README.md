@@ -1,6 +1,6 @@
 # StayFinder
 Frontend Assignment
-**StayFinder** is a modern, responsive hotel discovery web application built using **HTML, CSS, and JavaScript**. The application fetches hotel data from a live REST API and displays it in an elegant, user-friendly interface.
+**StayFinder** is a modern, responsive hotel discovery web application built using **HTML**. The application fetches hotel data from a live REST API and displays it in an elegant, user-friendly interface.
 
 Designed as a **single-page application (SPA)**, StayFinder provides an interactive hotel browsing experience with search, filtering, hotel ratings, pricing, and authentication screens while maintaining a clean and responsive UI.
 
