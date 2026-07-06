@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StayFinder | Premium Hotel Booking Experience</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col relative">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-9999 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ================= AUTH CONTAINER SECTION ================= -->
+    <div id="authContainer" class="fixed inset-0 bg-slate-900 flex items-center justify-center p-4 z-999 transition-all duration-500">
+        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-100 p-8 relative z-10 transform transition-all duration-300">
+            <div class="flex items-center gap-2 justify-center mb-6">
+                <div class="bg-blue-600 text-white p-2 rounded-xl shadow-md">
+                    <i class="fa-solid fa-hotel text-lg"></i>
+                </div>
+                <span class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">StayFinder</span>
+            </div>
+
+            <div class="flex border-b border-slate-100 mb-6">
+                <button onclick="switchAuthTab('login')" id="tabLogin" class="flex-1 pb-3 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 transition cursor-pointer">Log In</button>
+                <button onclick="switchAuthTab('signup')" id="tabSignup" class="flex-1 pb-3 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-600 transition cursor-pointer">Sign Up</button>
+            </div>
+
+            <div id="authAlert" class="hidden bg-red-50 text-red-700 text-xs border border-red-100 rounded-xl p-3 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span id="authAlertText">Invalid credentials provided.</span>
+            </div>
+
+            <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div id="nameField" class="hidden">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Full Name</label>
+                    <div class="flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-blue-500 transition">
+                        <i class="fa-regular fa-user text-slate-400 text-sm"></i>
+                        <input type="text" id="authName" placeholder="John Doe" class="w-full bg-transparent text-sm focus:outline-none text-slate-800">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email Address</label>
+                    <div class="flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-blue-500 transition">
+                        <i class="fa-regular fa-envelope text-slate-400 text-sm"></i>
+                        <input type="email" id="authEmail" required placeholder="name@example.com" class="w-full bg-transparent text-sm focus:outline-none text-slate-800">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Password</label>
+                        <a href="#" class="text-[11px] font-medium text-blue-600 hover:underline">Forgot?</a>
+                    </div>
+                    <div class="flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-blue-500 transition">
+                        <i class="fa-solid fa-lock text-slate-400 text-sm"></i>
+                        <input type="password" id="authPassword" required placeholder="••••••••" class="w-full bg-transparent text-sm focus:outline-none text-slate-800">
+                    </div>
+                </div>
+
+                <button type="submit" id="authSubmitBtn" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm py-3 rounded-xl transition shadow-lg mt-2 cursor-pointer">
+                    Sign In to Account
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ================= MAIN APP CONTENT ================= -->
+    <div id="mainDashboard" class="hidden flex-col min-h-screen">
+        <!-- Navbar -->
+        <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-xs">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-2 cursor-pointer" onclick="resetFilters()">
+                    <div class="bg-blue-600 text-white p-2 rounded-xl shadow-md">
+                        <i class="fa-solid fa-hotel text-lg"></i>
+                    </div>
+                    <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">StayFinder</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleAddHotelModal(true)" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold px-4 py-2 rounded-xl transition border border-blue-200 flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-circle-plus"></i> List a Hotel
+                    </button>
+                    <div class="h-6 w-px bg-slate-200"></div>
+                    <div class="flex items-center gap-2 group cursor-pointer" onclick="handleLogout()">
+                        <div class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-700 text-xs font-bold border border-slate-200 group-hover:bg-red-50 group-hover:text-red-600 transition" id="userAvatar">
+                            U
+                        </div>
+                        <i class="fa-solid fa-right-from-bracket text-xs text-slate-400 group-hover:text-red-600 transition"></i>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <header class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white py-12 px-4 relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+            <div class="max-w-4xl mx-auto text-center relative z-10">
+                <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3">Welcome Back, <span id="welcomeUserName" class="text-blue-400">Explorer</span>!</h1>
+                <p class="text-slate-300 text-sm sm:text-base max-w-xl mx-auto mb-8">Search and filter top properties with real-time room availability guarantees.</p>
+                
+                <!-- Global Search Bar Component -->
+                <div class="bg-white p-2 rounded-2xl shadow-xl max-w-2xl mx-auto flex flex-col sm:flex-row items-center gap-2 border border-slate-700/50">
+                    <div class="flex items-center gap-2 px-3 w-full text-slate-600 border-b sm:border-b-0 sm:border-r border-slate-100 pb-2 sm:pb-0">
+                        <i class="fa-solid fa-magnifying-glass text-blue-500"></i>
+                        <input type="text" id="globalSearch" placeholder="Search hotel name (try 'Regal', 'Resort', 'Palace')..." class="w-full bg-transparent focus:outline-none text-slate-800 text-sm py-2">
+                    </div>
+                    <button onclick="triggerSearch()" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-6 py-3 rounded-xl transition duration-200 shadow-md whitespace-nowrap cursor-pointer">
+                        Search Hotels
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Quick City Badges -->
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full">
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Popular Destinations</p>
+            <div class="flex gap-2 overflow-x-auto pb-3 custom-scrollbar" id="cityContainer"></div>
+        </section>
+
+        <!-- Main Workspace Grid -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 w-full">
+            <!-- Interactive Sidebar Filters -->
+            <aside class="bg-white p-6 rounded-2xl shadow-xs border border-slate-100 h-fit space-y-6">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h2 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-blue-600"></i> Filters
+                    </h2>
+                    <button onclick="resetFilters()" class="text-xs font-medium text-blue-600 hover:text-blue-800 cursor-pointer transition">Clear All</button>
+                </div>
+
+                <!-- Price Filter Component -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Price Budget (₹)</label>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div>
+                            <span class="text-[10px] text-slate-400">Min Price</span>
+                            <input type="number" id="minPrice" placeholder="0" class="w-full border border-slate-200 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400">Max Price</span>
+                            <input type="number" id="maxPrice" placeholder="15000" class="w-full border border-slate-200 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Minimum Rating Component -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Guest Rating</label>
+                    <select id="minRating" class="w-full border border-slate-200 rounded-lg p-2 text-sm bg-white focus:outline-none focus:border-blue-500">
+                        <option value="">Any Rating</option>
+                        <option value="4.5">⭐ 4.5 & Above</option>
+                        <option value="4.0">⭐ 4.0 & Above</option>
+                        <option value="3.5">⭐ 3.5 & Above</option>
+                    </select>
+                </div>
+
+                <!-- Sort By Component -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Sort Order</label>
+                    <select id="orderBy" class="w-full border border-slate-200 rounded-lg p-2 text-sm bg-white focus:outline-none focus:border-blue-500">
+                        <option value="">Default Ranking</option>
+                        <option value="-rating">Highest Rating First</option>
+                        <option value="price">Price: Low to High</option>
+                        <option value="-price">Price: High to Low</option>
+                    </select>
+                </div>
+            </aside>
+
+            <!-- Hotels Dynamic Listing Section -->
+            <section class="lg:col-span-3 space-y-4">
+                <div class="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-slate-100">
+                    <p class="text-sm text-slate-500" id="resultCounter">Finding best rates...</p>
+                    <div id="dataSourceBadge" class="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-600">API Mode</div>
+                </div>
+
+                <!-- Loading Shimmer/Skeleton Grid State -->
+                <div id="loader" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white rounded-2xl h-80 animate-pulse border border-slate-100"></div>
+                    <div class="bg-white rounded-2xl h-80 animate-pulse border border-slate-100"></div>
+                </div>
+
+                <!-- Clean Error/Empty View State Layout -->
+                <div id="emptyState" class="hidden bg-white rounded-2xl p-12 text-center border border-slate-100 max-w-md mx-auto">
+                    <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
+                        <i class="fa-solid fa-bed text-2xl"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-lg mb-1">No Accommodations Found</h3>
+                    <p class="text-slate-500 text-sm mb-4">Try altering your search filters or clear values.</p>
+                </div>
+
+                <!-- Primary Hotel Grid -->
+                <div id="hotelGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </section>
+        </main>
+
+        <!-- Booking Modal -->
+        <div id="bookingModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
+            <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl relative transform scale-95 transition-transform duration-300" id="modalCard">
+                <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+                <div class="text-center" id="modalMainContent">
+                    <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-100">
+                        <i class="fa-solid fa-circle-check text-xl"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-900 text-lg mb-1">Reservation Initialized</h3>
+                    <p class="text-slate-500 text-xs px-2 mb-4">You have successfully initiated your booking parameters for:</p>
+                    
+                    <div class="bg-slate-50 p-3 rounded-xl mb-4 text-left border border-slate-100">
+                        <h4 id="modalHotelName" class="font-bold text-sm text-slate-800 truncate">Hotel Name</h4>
+                        <p id="modalHotelLoc" class="text-xs text-slate-400 flex items-center gap-1 mt-0.5"><i class="fa-solid fa-location-dot text-[10px]"></i> Location</p>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="closeModal()" class="flex-1 border border-slate-200 text-slate-600 font-medium text-xs py-2.5 rounded-xl hover:bg-slate-50 cursor-pointer transition">Cancel</button>
+                        <button onclick="confirmBookingStub()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs py-2.5 rounded-xl cursor-pointer transition flex items-center justify-center gap-2" id="payBtn">
+                            Proceed to Pay
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Hotel Modal Form Panel -->
+        <div id="addHotelModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
+            <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative transform scale-95 transition-transform duration-300" id="addHotelCard">
+                <button onclick="toggleAddHotelModal(false)" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+                <h3 class="font-bold text-slate-900 text-lg mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-hotel text-blue-600"></i> List New Property
+                </h3>
+                <form onsubmit="handleNewHotelSubmit(event)" class="space-y-3.5">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Hotel Name</label>
+                        <input type="text" id="newHotelName" required placeholder="e.g., Grand Palace Resort" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-blue-500 bg-slate-50 focus:bg-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Location / Destination City</label>
+                        <select id="newHotelLocation" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none bg-slate-50">
+                            <option value="Delhi">Delhi</option>
+                            <option value="Mumbai">Mumbai</option>
+                            <option value="Bengaluru">Bengaluru</option>
+                            <option value="Goa">Goa</option>
+                            <option value="Jaipur">Jaipur</option>
+                            <option value="Pune">Pune</option>
+                            <option value="Gurgaon">Gurgaon</option>
+                            <option value="Noida">Noida</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nightly Price (₹)</label>
+                            <input type="number" id="newHotelPrice" required placeholder="e.g., 4500" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-blue-500 bg-slate-50 transition">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Star Rating (1-5)</label>
+                            <input type="number" id="newHotelRating" required step="0.1" min="1" max="5" placeholder="e.g., 4.5" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-blue-500 bg-slate-50 transition">
+                        </div>
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button type="button" onclick="toggleAddHotelModal(false)" class="flex-1 border border-slate-200 text-slate-600 font-medium text-xs py-2.5 rounded-xl hover:bg-slate-50 transition">Cancel</button>
+                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs py-2.5 rounded-xl transition shadow-md">Upload Listing</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <footer class="bg-white border-t border-slate-100 mt-auto py-4">
+            <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400">
+                &copy; 2026 StayFinder Hub. Hybrid Mock & DRF Live System Engine.
+            </div>
+        </footer>
+    </div>
+
+    <!-- ================= SCRIPT ENGINE CONTROLLER ================= -->
+    <script>
+        const API_BASE = "https://demohotelsapi.pythonanywhere.com/hotels/";
+        const popularCities = ["Ahmedabad", "Bengaluru", "Chennai", "Delhi", "Goa", "Gurgaon", "Hyderabad", "Jaipur", "Kolkata", "Mumbai", "Noida", "Pune"];
+        
+        const backupOfflineHotelsCatalog = [
+            { name: "Regal Crescent Hotel & Suites", location: "Gurgaon", price: 4500, rating: 4.8 },
+            { name: "The Grand Taj Mahal Palace", location: "Mumbai", price: 9500, rating: 4.9 },
+            { name: "Goa Sun & Sand Luxury Villa", location: "Goa", price: 3200, rating: 4.3 },
+            { name: "Bengaluru Tech Park Inn", location: "Bengaluru", price: 2800, rating: 4.0 },
+            { name: "Delhi Imperial Heritage Luxury Stay", location: "Delhi", price: 6000, rating: 4.7 },
+            { name: "Noida Horizon View Residency", location: "Noida", price: 2100, rating: 3.9 },
+            { name: "Jaipur Pink City Palace Resort", location: "Jaipur", price: 5400, rating: 4.6 },
+            { name: "Pune Cyber Valley Comforts", location: "Pune", price: 3100, rating: 4.2 }
+        ];
+
+        let activeSelectedCity = "";
+        let currentAuthMode = "login"; 
+        let customAddedHotels = [];
+        let filterTimeout;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const cachedUser = localStorage.getItem("authenticatedUser");
+            const storedHotels = localStorage.getItem("customHotels");
+            if (storedHotels) {
+                customAddedHotels = JSON.parse(storedHotels);
+            }
+            if (cachedUser) {
+                initializeApplicationDashboard(JSON.parse(cachedUser).name || "Explorer");
+            }
+
+            // Hook instant interactive listeners onto all filter elements
+            document.getElementById("globalSearch").addEventListener("input", debounceFilter);
+            document.getElementById("minPrice").addEventListener("input", debounceFilter);
+            document.getElementById("maxPrice").addEventListener("input", debounceFilter);
+            document.getElementById("minRating").addEventListener("change", fetchHotelListings);
+            document.getElementById("orderBy").addEventListener("change", fetchHotelListings);
+        });
+
+        // Toast Notification Function
+        function showToast(message, type = 'success') {
+            const container = document.getElementById("toastContainer");
+            const toast = document.createElement("div");
+            toast.className = `p-4 rounded-xl shadow-lg text-white font-medium text-xs flex items-center gap-2 transition-all duration-300 transform translate-y-2 opacity-0 max-w-xs pointer-events-auto ${
+                type === 'success' ? 'bg-emerald-600' : type === 'info' ? 'bg-blue-600' : 'bg-rose-600'
+            }`;
+            
+            const icon = type === 'success' ? 'fa-circle-check' : type === 'info' ? 'fa-circle-info' : 'fa-circle-exclamation';
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.remove('opacity-0', 'translate-y-2'); }, 10);
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => { toast.remove(); }, 300);
+            }, 3000);
+        }
+
+        function debounceFilter() {
+            clearTimeout(filterTimeout);
+            filterTimeout = setTimeout(() => { fetchHotelListings(); }, 300);
+        }
+
+        function switchAuthTab(mode) {
+            currentAuthMode = mode;
+            const alertBox = document.getElementById("authAlert");
+            const nameField = document.getElementById("nameField");
+            const submitBtn = document.getElementById("authSubmitBtn");
+            const tabLogin = document.getElementById("tabLogin");
+            const tabSignup = document.getElementById("tabSignup");
+            alertBox.classList.add("hidden");
+            
+            if (mode === "login") {
+                nameField.classList.add("hidden");
+                submitBtn.innerText = "Sign In to Account";
+                tabLogin.className = "flex-1 pb-3 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 transition cursor-pointer";
+                tabSignup.className = "flex-1 pb-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition cursor-pointer";
+            } else {
+                nameField.classList.remove("hidden");
+                submitBtn.innerText = "Create Free Account";
+                tabSignup.className = "flex-1 pb-3 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 transition cursor-pointer";
+                tabLogin.className = "flex-1 pb-3 text-sm font-medium text-slate-400 border-b-2 border-transparent transition cursor-pointer";
+            }
+        }
+
+        function handleAuthSubmit(event) {
+            event.preventDefault();
+            const email = document.getElementById("authEmail").value.trim();
+            const password = document.getElementById("authPassword").value.trim();
+            const name = document.getElementById("authName").value.trim() || "Explorer";
+            const alertBox = document.getElementById("authAlert");
+            const alertText = document.getElementById("authAlertText");
+
+            if (password.length < 4) {
+                alertText.innerText = "Password must be at least 4 characters.";
+                alertBox.classList.remove("hidden");
+                return;
+            }
+
+            const userSessionData = { email: email, name: currentAuthMode === 'login' ? email.split('@')[0] : name };
+            localStorage.setItem("authenticatedUser", JSON.stringify(userSessionData));
+            initializeApplicationDashboard(userSessionData.name);
+            showToast(`Welcome back, ${userSessionData.name}!`, 'success');
+        }
+
+        function initializeApplicationDashboard(userName) {
+            document.getElementById("authContainer").classList.add("opacity-0", "pointer-events-none");
+            const mainDashboard = document.getElementById("mainDashboard");
+            mainDashboard.classList.remove("hidden");
+            mainDashboard.classList.add("flex");
+            
+            document.getElementById("welcomeUserName").innerText = userName;
+            document.getElementById("userAvatar").innerText = userName.charAt(0).toUpperCase();
+
+            renderCityBadges();
+            fetchHotelListings();
+        }
+
+        function handleLogout() {
+            localStorage.removeItem("authenticatedUser");
+            location.reload(); 
+        }
+
+        function toggleAddHotelModal(show) {
+            const targetModal = document.getElementById("addHotelModal");
+            if (show) {
+                targetModal.classList.remove("hidden");
+                setTimeout(() => { targetModal.classList.remove("opacity-0"); document.getElementById("addHotelCard").classList.remove("scale-95"); }, 5);
+            } else {
+                targetModal.classList.add("opacity-0"); document.getElementById("addHotelCard").classList.add("scale-95");
+                setTimeout(() => { targetModal.classList.add("hidden"); }, 300);
+            }
+        }
+
+        function handleNewHotelSubmit(event) {
+            event.preventDefault();
+            const name = document.getElementById("newHotelName").value.trim();
+            const locationName = document.getElementById("newHotelLocation").value;
+            const price = parseFloat(document.getElementById("newHotelPrice").value);
+            const rating = parseFloat(document.getElementById("newHotelRating").value);
+
+            customAddedHotels.unshift({ name, location: locationName, price, rating });
+            localStorage.setItem("customHotels", JSON.stringify(customAddedHotels));
+
+            event.target.reset();
+            toggleAddHotelModal(false);
+            fetchHotelListings();
+            showToast(`${name} has been successfully listed!`, 'success');
+        }
+
+        function renderCityBadges() {
+            const container = document.getElementById("cityContainer");
+            container.innerHTML = popularCities.map(city => `
+                <button onclick="selectCityFilter('${city}')" class="px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer border ${
+                    activeSelectedCity === city 
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                }">
+                    ${city}
+                </button>
+            `).join('');
+        }
+
+        function selectCityFilter(cityName) {
+            activeSelectedCity = (activeSelectedCity === cityName) ? "" : cityName;
+            renderCityBadges();
+            fetchHotelListings();
+        }
+
+        function triggerSearch() { fetchHotelListings(); }
+
+        function resetFilters() {
+            document.getElementById("globalSearch").value = "";
+            document.getElementById("minPrice").value = "";
+            document.getElementById("maxPrice").value = "";
+            document.getElementById("minRating").value = "";
+            document.getElementById("orderBy").value = "";
+            activeSelectedCity = "";
+            renderCityBadges();
+            fetchHotelListings();
+            showToast("Filters reset to default configurations.", 'info');
+        }
+
+        async function fetchHotelListings() {
+            const grid = document.getElementById("hotelGrid");
+            const loader = document.getElementById("loader");
+            const emptyState = document.getElementById("emptyState");
+            const counter = document.getElementById("resultCounter");
+            const badge = document.getElementById("dataSourceBadge");
+
+            grid.innerHTML = "";
+            emptyState.classList.add("hidden");
+            loader.classList.remove("hidden");
+            counter.innerText = "Querying hotel inventory parameters...";
+
+            const urlParameters = new URLSearchParams();
+            const searchValue = document.getElementById("globalSearch").value.trim().toLowerCase();
+            if (searchValue) urlParameters.append("search", searchValue);
+            if (activeSelectedCity) urlParameters.append("location", activeSelectedCity);
+            
+            const minPrice = document.getElementById("minPrice").value;
+            const maxPrice = document.getElementById("maxPrice").value;
+            const minRating = document.getElementById("minRating").value;
+            const ordering = document.getElementById("orderBy").value;
+
+            let finalHotelsPool = [];
+
+            try {
+                const networkResponse = await fetch(`${API_BASE}?${urlParameters.toString()}`, { method: 'GET' });
+                
+                if (networkResponse.ok) {
+                    const responseData = await networkResponse.json();
+                    let serverHotels = Array.isArray(responseData) ? responseData : (responseData.results || []);
+                    
+                    if (serverHotels.length > 0) {
+                        finalHotelsPool = [...customAddedHotels, ...serverHotels];
+                        badge.innerText = "Live API Connected";
+                        badge.className = "text-[11px] font-bold px-2 py-0.5 rounded bg-green-50 text-green-600";
+                    } else {
+                        throw new Error("Empty API array response.");
+                    }
+                } else {
+                    throw new Error("Server error code.");
+                }
+            } catch (err) {
+                finalHotelsPool = [...customAddedHotels, ...backupOfflineHotelsCatalog];
+                badge.innerText = "Offline Engine Mode";
+                badge.className = "text-[11px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700";
+            }
+
+            if (searchValue) {
+                finalHotelsPool = finalHotelsPool.filter(h => h.name.toLowerCase().includes(searchValue) || h.location.toLowerCase().includes(searchValue));
+            }
+            if (activeSelectedCity) {
+                finalHotelsPool = finalHotelsPool.filter(h => h.location.toLowerCase() === activeSelectedCity.toLowerCase());
+            }
+            if (minPrice) finalHotelsPool = finalHotelsPool.filter(h => h.price >= parseFloat(minPrice));
+            if (maxPrice) finalHotelsPool = finalHotelsPool.filter(h => h.price <= parseFloat(maxPrice));
+            if (minRating) finalHotelsPool = finalHotelsPool.filter(h => h.rating >= parseFloat(minRating));
+            
+            if (ordering === "price") finalHotelsPool.sort((a,b) => a.price - b.price);
+            if (ordering === "-price") finalHotelsPool.sort((a,b) => b.price - a.price);
+            if (ordering === "-rating") finalHotelsPool.sort((a,b) => b.rating - a.rating);
+
+            loader.classList.add("hidden");
+            counter.innerText = `${finalHotelsPool.length} luxury stays found matching parameters.`;
+
+            if (finalHotelsPool.length === 0) {
+                emptyState.classList.remove("hidden");
+            } else {
+                renderHotelGrid(finalHotelsPool);
+            }
+        }
+
+        function renderHotelGrid(hotelCollectionItems) {
+            const targetGridContainer = document.getElementById("hotelGrid");
+            const scenicStockImageryPool = [
+                "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80",
+                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=600&q=80",
+                "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80",
+                "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=600&q=80"
+            ];
+
+            targetGridContainer.innerHTML = hotelCollectionItems.map((hotelItem, arrayIndexPosition) => {
+                const itemSelectedImage = scenicStockImageryPool[arrayIndexPosition % scenicStockImageryPool.length];
+                return `
+                    <div class="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-xs hover:shadow-md transition duration-300 flex flex-col group animate-fadeIn">
+                        <div class="relative h-44 w-full bg-slate-200 overflow-hidden">
+                            <img src="${itemSelectedImage}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                            <div class="absolute top-3 right-3 bg-white/95 backdrop-blur-xs px-2 py-1 rounded-lg text-xs font-bold text-slate-800 shadow-xs">
+                                ⭐ ${parseFloat(hotelItem.rating || 4).toFixed(1)}
+                            </div>
+                        </div>
+                        <div class="p-4 flex-1 flex flex-col justify-between">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm tracking-tight line-clamp-1 group-hover:text-blue-600 transition">${hotelItem.name || 'Premium Accommodation'}</h3>
+                                <p class="text-xs text-slate-400 mt-1 flex items-center gap-1"><i class="fa-solid fa-location-dot"></i> ${hotelItem.location || 'India'}</p>
+                            </div>
+                            <div class="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between">
+                                <div>
+                                    <span class="text-[10px] block uppercase font-bold tracking-wider text-slate-400">Nightly Rate</span>
+                                    <span class="text-base font-extrabold text-slate-950">₹${Number(hotelItem.price || 0).toLocaleString('en-IN')}</span>
+                                </div>
+                                <button onclick="openBookingConfirmationModal('${(hotelItem.name || '').replace(/'/g, "\\'")}', '${(hotelItem.location || '').replace(/'/g, "\\'")}')" class="bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs px-3.5 py-2 rounded-xl transition cursor-pointer">Reserve</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openBookingConfirmationModal(name, location) {
+            document.getElementById("modalHotelName").innerText = name;
+            document.getElementById("modalHotelLoc").innerHTML = `<i class="fa-solid fa-location-dot text-[10px]"></i> ${location}`;
+            
+            // Reset the state of the payment button inside the modal
+            const payBtn = document.getElementById("payBtn");
+            payBtn.innerHTML = "Proceed to Pay";
+            payBtn.disabled = false;
+
+            const targetModal = document.getElementById("bookingModal");
+            targetModal.classList.remove("hidden");
+            setTimeout(() => { targetModal.classList.remove("opacity-0"); document.getElementById("modalCard").classList.remove("scale-95"); }, 5);
+        }
+
+        function closeModal() {
+            const targetModal = document.getElementById("bookingModal");
+            targetModal.classList.add("opacity-0"); document.getElementById("modalCard").classList.add("scale-95");
+            setTimeout(() => { targetModal.classList.add("hidden"); }, 300);
+        }
+
+        function confirmBookingStub() { 
+            const payBtn = document.getElementById("payBtn");
+            payBtn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i> Processing...`;
+            payBtn.disabled = true;
+
+            setTimeout(() => {
+                closeModal();
+                showToast(`Reservation confirmed for ${document.getElementById("modalHotelName").innerText}!`, 'success');
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
