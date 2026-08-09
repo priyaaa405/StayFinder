@@ -28,7 +28,7 @@ Designed as a **single-page application (SPA)**, StayFinder provides an interact
 - CSS3
 - JavaScript (ES6)
 - REST API
-- Vercel (Deployment)
+- Vercel for Deployment
 
 ---
 
